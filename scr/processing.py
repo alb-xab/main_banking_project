@@ -12,3 +12,4 @@ def sort_by_date(work_list: list, reverse=True) -> list:
     filtered_list = []
     filtered_list = sorted(work_list, key=lambda x: x['date'], reverse=reverse)
     return filtered_list
+
