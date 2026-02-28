@@ -1,9 +1,14 @@
-def filter_by_state(work_list: list, state: str = "EXECUTED") -> list:
+from typing import Any
+
+
+def filter_by_state(work_list: list, state: str = "EXECUTED") -> str | list[Any]:
     """Функция для фильтрации списка словарей по ключу"""
     filtered_list = []
     for i in work_list:
         if i["state"] == state:
             filtered_list.append(i)
+    if not filtered_list:
+        return "Подходящих списков не было найдено"
     return filtered_list
 
 
