@@ -1,7 +1,6 @@
 import pytest
 
 from scr.processing import filter_by_state, sort_by_date
-from tests.conftest import test_empty_list, test_work_list
 
 
 @pytest.mark.parametrize(
