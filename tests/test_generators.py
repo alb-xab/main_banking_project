@@ -1,12 +1,7 @@
-from typing import Any, Generator
-
-import pytest
-
-from scr.generators import filter_by_currency
+from scr.generators import card_number_generator, filter_by_currency, transaction_descriptions
 
 
-
-def test_filter_by_currency_basic_1(test_transaction_list: list[dict]):
+def test_filter_by_currency_basic_1(test_transaction_list: list[dict]) -> None:
     test_gen_basic_1 = filter_by_currency(test_transaction_list, "USD")
     assert next(test_gen_basic_1) == {
         "id": 939719570,
@@ -36,7 +31,8 @@ def test_filter_by_currency_basic_1(test_transaction_list: list[dict]):
         "to": "Visa Platinum 8990922113665229",
     }
 
-def test_filter_by_currency_basic_2(test_transaction_list: list[dict]):
+
+def test_filter_by_currency_basic_2(test_transaction_list: list[dict]) -> None:
     test_gen_basic_2 = filter_by_currency(test_transaction_list, "RUB")
     assert next(test_gen_basic_2) == {
         "id": 873106923,
@@ -57,6 +53,29 @@ def test_filter_by_currency_basic_2(test_transaction_list: list[dict]):
         "to": "Счет 14211924144426031657",
     }
 
-def test_filter_by_currency_basic_3(test_transaction_list: list[dict]):
+
+def test_filter_by_currency_basic_3(test_transaction_list: list[dict]) -> None:
     test_gen_basic_3 = filter_by_currency(test_transaction_list, "EUR")
-    assert next(test_gen_basic_3) == {}
+    assert next(test_gen_basic_3, None) is None
+
+
+def test_filter_by_currency_empty(test_empty_list: list[dict]) -> None:
+    assert next(filter_by_currency(test_empty_list), None) is None
+
+
+def test_transaction_descriptions_basic(test_transaction_list: list[dict]) -> None:
+    test_trans_des_basic = transaction_descriptions(test_transaction_list)
+    assert next(test_trans_des_basic) == "Перевод организации"
+    assert next(test_trans_des_basic) == "Перевод со счета на счет"
+    assert next(test_trans_des_basic) == "Перевод со счета на счет"
+    assert next(test_trans_des_basic) == "Перевод с карты на карту"
+
+
+def test_transaction_descriptions_empty(test_empty_list: list) -> None:
+    test_trans_des_empty = transaction_descriptions(test_empty_list)
+    assert next(test_trans_des_empty, None) is None
+
+
+def test_card_number_generator_basic() -> None:
+    assert card_number_generator(start=1, stop=1) == "0000 0000 0000 0001"
+    assert card_number_generator(start=5000000000000000, stop=5000000000000000) == "5000 0000 0000 0000"
