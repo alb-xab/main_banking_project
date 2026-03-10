@@ -85,6 +85,10 @@ def test_transaction_descriptions_empty(test_empty_list: list) -> None:
     assert next(test_trans_des_empty, None) is None
 
 
-def test_card_number_generator_basic() -> None:
-    assert card_number_generator(start=1, stop=1) == "0000 0000 0000 0001"
-    assert card_number_generator(start=5000000000000000, stop=5000000000000000) == "5000 0000 0000 0000"
+@pytest.mark.parametrize(
+    "start, stop, expected",
+    [(1, 1, "0000 0000 0000 0001"), (5000000000000000, 5000000000000000, "5000 0000 0000 0000")],
+)
+def test_card_number_generator_basic(start: int, stop: int, expected: str) -> None:
+    test_card_basic = card_number_generator(start, stop)
+    assert test_card_basic == expected
