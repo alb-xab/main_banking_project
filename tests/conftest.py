@@ -85,3 +85,29 @@ def test_transaction_list() -> list[dict]:
             "to": "Счет 14211924144426031657",
         },
     ]
+
+
+@pytest.fixture
+def test_transaction_list_incorrect_currency() -> list[dict]:
+    return [
+        {
+            "id": 939719570,
+            "state": "EXECUTED",
+            "date": "2018-06-30T02:08:58.425572",
+            "operationAmount": {"amount": "9824.07", "currency": {"name": "AMD", "code": "AMD"}},
+            "description": "Перевод организации",
+            "from": "Счет 75106830613657916952",
+            "to": "Счет 11776614605963066702",
+        }
+    ]
+
+
+@pytest.fixture
+def test_transaction_list_without_operation() -> list[dict]:
+    return [
+        {
+            "id": 939719570,
+            "state": "EXECUTED",
+            "date": "2018-06-30T02:08:58.425572",
+        }
+    ]

@@ -1,10 +1,15 @@
 import datetime
-from typing import Callable, Any
+from typing import Any, Callable
 
 
-def log(filename=None):
+def log(filename: str = "") -> Callable:
+    """Декоратор логирования"""
+
     def decorator_1(func: Callable) -> Callable:
+        """Декоратор внутренний логирования"""
+
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            """Декоратор внутренний для логирования времени"""
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             log_message = ""
 
