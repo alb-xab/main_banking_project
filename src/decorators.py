@@ -9,43 +9,45 @@ def log(filename: str = "") -> Callable:
         """Декоратор внутренний логирования"""
 
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            """Декоратор внутренний для логирования времени"""
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log_message = ""
 
             try:
                 start_msg = f"[{timestamp}] Начало работы функции {func.__name__}"
+
+                # Перезаписываем файл в начале выполнения функции
                 if filename:
-                    with open(filename, "a", encoding="utf-8") as f:
+                    with open(filename, "w", encoding="utf-8") as f:
                         f.write(start_msg + "\n")
                 else:
                     print(start_msg)
 
                 result = func(*args, **kwargs)
-                end_msg = f"[{timestamp}] Конец работы функции {func.__name__}. Результат: {result}"
-                log_message = end_msg
+                end_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                end_msg = f"[{end_timestamp}] Конец работы функции {func.__name__}. Результат: {result}"
 
+                # Дописываем сообщение о завершении
                 if filename:
-                    with open(filename, "a", encoding="utf-8") as f:
-                        f.write(log_message + "\n")
+                    with open(filename, "a", encoding="utf-8") as f:  # теперь дописываем
+                        f.write(end_msg + "\n")
                 else:
-                    print(log_message)
+                    print(end_msg)
                 return result
 
             except Exception as e:
+                error_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 error_msg = (
-                    f"[{timestamp}] Ошибка в функции {func.__name__}. "
+                    f"[{error_timestamp}] Ошибка в функции {func.__name__}. "
                     f"Тип ошибки: {type(e).__name__}, "
                     f"Сообщение: {e}, "
                     f"Аргументы: args={args}, kwargs={kwargs}"
                 )
-                log_message = error_msg
+
                 if filename:
                     try:
-                        with open(filename, "a", encoding="utf-8") as f:
-                            f.write(log_message + "\n")
+                        with open(filename, "a", encoding="utf-8") as f:  # дописываем ошибку
+                            f.write(error_msg + "\n")
                     except IOError as file_error:
-                        print(f"[{timestamp}] Не удалось записать в файл {filename}: {file_error}")
+                        print(f"[{error_timestamp}] Не удалось записать в файл {filename}: {file_error}")
                 else:
                     print(error_msg)
                 raise

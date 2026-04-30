@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from scr.external_api import conversion_amount
+from src.external_api import conversion_amount
 
 
 def test_conversion_amount() -> None:

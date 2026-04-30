@@ -1,6 +1,6 @@
 import pytest
 
-from scr.decorators import log
+from src.decorators import log
 
 
 def test_successful_execution_with_filename() -> None:
