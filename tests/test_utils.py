@@ -121,7 +121,7 @@ def test_load_operations_xlsx_empty_data_error(mock_exists: Mock, mock_read_exce
 
 
 def test_operation_conversion_amount_rub_returns_same_amount() -> None:
-    operations = [
+    operation = [
         {
             "id": 1,
             "operationAmount": {
@@ -131,7 +131,7 @@ def test_operation_conversion_amount_rub_returns_same_amount() -> None:
         }
     ]
 
-    result = utils.operation_conversion_amount(operations)
+    result = utils.operation_conversion_amount(operation)
     assert result == [31957.58]
 
 
