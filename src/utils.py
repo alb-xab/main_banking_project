@@ -1,7 +1,9 @@
 import json
 import logging
 import os.path
-from typing import Any
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 
 from src.external_api import conversion_amount
 
@@ -14,63 +16,121 @@ logger.addHandler(file_handler)
 
 
 def load_operations(road_to_file: str) -> list[dict]:
-    """Функция загрузки данных о финансовых операциях с базы данных"""
+    """
+    Функция загрузки данных о финансовых операциях из файлов расширений JSON, CSV, XLSX.
+    """
     logger.info("Запуск функции загрузки финансовых операций.")
     logger.info("Проверка корректного ввода пути.")
+
     if not os.path.exists(road_to_file):
-        logger.warning("Ошибка. Не найден файл. Проверьте корректность введённого пути")
+        logger.warning("Ошибка. Не найден файл. Проверьте корректность введённого пути.")
         return []
+
+    root, ext = os.path.splitext(road_to_file)
+    ext = ext.lower()
+
     try:
-        logger.info("Попытка загрузки данных с базы данных.")
-        with open(road_to_file, "r", encoding="utf-8") as file:
-            database = json.load(file)
-            if not database:
-                logger.warning("База данных пуста")
-                return []
-            if isinstance(database, list):
-                logger.info("Загрузка успешна.")
-                return database
+        logger.info(f"Попытка загрузки данных из файла: {road_to_file}")
+
+        if ext == ".json":
+            with open(road_to_file, "r", encoding="utf-8") as file:
+                database = json.load(file)
+                if not database:
+                    logger.warning("База данных пуста.")
+                    return []
+                if isinstance(database, list):
+                    logger.info("Загрузка JSON-файла успешна.")
+                    return database
+                else:
+                    logger.warning("Некорректный формат данных в JSON-файле: ожидается список.")
+                    return []
+
+        elif ext in (".csv", ".xlsx"):
+            if ext == ".csv":
+                df = pd.read_csv(road_to_file)
             else:
-                logger.warning("Некорректный формат данных в файле")
+                df = pd.read_excel(road_to_file, engine="openpyxl")
+            if df.empty:
+                logger.warning("Файл содержит пустые данные.")
                 return []
+            return df.to_dict(orient="records")
+
+        else:
+            logger.warning(f"Неподдерживаемый формат файла: {ext}. Поддерживаемые форматы: .json, .csv, .xls, .xlsx.")
+            return []
 
     except json.JSONDecodeError as e:
-        logger.error(f"Ошибка: {e}.")
+        logger.error(f"Ошибка парсинга JSON-файла {road_to_file}: {e}")
+        return []
+    except pd.errors.EmptyDataError:
+        logger.warning(f"Файл {road_to_file} содержит пустые данные.")
+        return []
+    except pd.errors.ParserError as e:
+        logger.error(f"Ошибка парсинга файла {road_to_file}: {e}")
+        return []
+    except PermissionError:
+        logger.error(f"Нет доступа к файлу {road_to_file}. Проверьте права доступа.")
+        return []
+    except Exception as e:
+        logger.error(f"Неожиданная ошибка при загрузке файла {road_to_file}: {type(e).__name__}: {e}")
         return []
 
 
-def operation_conversion_amount(list_of_operations: list[dict]) -> Any:
-    """Функция для получения данных об операциях"""
-    result = ""
-    logger.info("Начало работы функции для получения данных об операциях")
-    logger.info("Начинаем перебор")
-    for operation in list_of_operations:
-        try:
-            if not operation["operationAmount"]:
-                logger.warning("Ошибка обработки операции. Информация по операции отсутствует")
-                return "Ошибка обработки операции. Информация по операции отсутствует"
-            if operation["operationAmount"]["currency"]["code"] == "RUB":
-                logger.info("Валюта операции RUB. Пропускаем.")
-                result = operation["operationAmount"]["amount"]
+def operation_conversion_amount(list_of_operations: List[Dict[str, Any]]) -> List[Optional[float]]:
+    """
+    Функция для получения данных об операциях с конвертацией в RUB.
+    """
+    results: List[Optional[float]] = []
+    logger.info(f"Начало работы функции. Всего операций: {len(list_of_operations)}")
 
-            elif (
-                operation["operationAmount"]["currency"]["code"] == "USD"
-                or operation["operationAmount"]["currency"]["code"] == "EUR"
-            ):
-                logger.info(
-                    f'Операция загружена с валютой {operation["operationAmount"]["currency"]["code"]}. '
-                    f"Начинаю конвертацию"
-                )
-                amount = float(operation["operationAmount"]["amount"])
-                currency_from = str(operation["operationAmount"]["currency"]["code"])
-                result = conversion_amount(amount, currency_from)
-                logger.info("Конвертация завершена")
+    for i, operation in enumerate(list_of_operations):
+        operation_id = operation.get("id", f"index_{i}")
+        try:
+            operation_amount = operation.get("operationAmount")
+            if not operation_amount:
+                logger.warning(f"Операция {operation_id}: отсутствует поле 'operationAmount'")
+                results.append(None)
+                continue
+
+            currency_data = operation_amount.get("currency")
+            if not currency_data:
+                logger.warning(f"Операция {operation_id}: отсутствует поле 'currency'")
+                results.append(None)
+                continue
+
+            currency_code = currency_data.get("code")
+            if not currency_code:
+                logger.warning(f"Операция {operation_id}: отсутствует код валюты")
+                results.append(None)
+                continue
+
+            amount_str = operation_amount.get("amount")
+            if amount_str is None:
+                logger.warning(f"Операция {operation_id}: отсутствует сумма операции")
+                results.append(None)
+                continue
+
+            try:
+                amount = float(amount_str)
+            except ValueError:
+                logger.error(f"Операция {operation_id}: не удалось преобразовать сумму '{amount_str}' в число")
+                results.append(None)
+                continue
+
+            if currency_code == "RUB":
+                logger.debug(f"Операция {operation_id}: валюта RUB, сумма сохраняется без изменений: {amount}")
+                results.append(amount)
+            elif currency_code in ("USD", "EUR"):
+                logger.info(f"Операция {operation_id}: конвертация {amount} {currency_code} в RUB")
+                converted_amount = conversion_amount(amount, currency_code)
+                results.append(converted_amount)
+                logger.debug(f"Операция {operation_id}: конвертация завершена, результат: {converted_amount}")
             else:
-                logger.info("Ошибка обработки операции. Неверный формат валюты")
-                result = None
-            return result
-        except (ValueError, KeyError) as e:
-            logger.error(f"Ошибка обработки операции {operation.get('id')}. Ошибка: {e}")
-            result = f"Ошибка обработки операции {operation.get('id')}. Информация по операции отсутствует"
-    logger.info("Завершение работы программы")
-    return result
+                logger.warning(f"Операция {operation_id}: неподдерживаемая валюта {currency_code}")
+                results.append(None)
+        except Exception as e:
+            logger.error(f"Критическая ошибка при обработке операции {operation_id}: {e}")
+            results.append(None)
+
+    logger.info(f"Завершение работы функции. Обработано операций: {len(results)}")
+    return results
