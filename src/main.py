@@ -72,6 +72,9 @@ def choise_function(data: list[dict], user_choice: str) -> None:
         database = process_bank_search(database, filt_word)
 
     print("Распечатываю итоговый список транзакций...")
+    if not database:
+        print("Не найдено ни одной транзакции, подходящей под ваши условия фильтрации")
+        return
 
     if user_choice == "1":
         for operation in database:
