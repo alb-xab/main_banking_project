@@ -15,6 +15,8 @@ def filter_by_currency(transactions: list, currency: str = "USD") -> Generator:
             and transaction["operationAmount"]["currency"]["code"] == currency
         ):
             yield transaction
+        elif isinstance(transaction, dict) and transaction.get("currency_code") == currency:
+            yield transaction
 
 
 def transaction_descriptions(transactions: list) -> Generator[str, None, None]:

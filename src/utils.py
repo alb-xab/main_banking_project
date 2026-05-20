@@ -1,6 +1,8 @@
 import json
 import logging
 import os.path
+import re
+from collections import Counter
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
@@ -134,3 +136,46 @@ def operation_conversion_amount(list_of_operations: List[Dict[str, Any]]) -> Lis
 
     logger.info(f"Завершение работы функции. Обработано операций: {len(results)}")
     return results
+
+
+def process_bank_search(data: list[dict], search: str) -> list[dict]:
+    """Функция для поиска нужных операций по ключу в базе данных и получению нового списка подходящих операций"""
+    new_data = []
+    pattern_for_search = re.compile(re.escape(search))
+
+    def internal_search(obj: Any):
+        if obj is None:
+            return False
+        elif isinstance(obj, str) and pattern_for_search.search(obj):
+            return True
+        elif isinstance(obj, int | float) and pattern_for_search.search(str(obj)):
+            return True
+        elif isinstance(obj, list):
+            return any(internal_search(item) for item in obj)
+        elif isinstance(obj, dict):
+            return any(internal_search(item) for item in obj.values())
+        else:
+            return bool(pattern_for_search.search(str(obj)))
+
+    for operation in data:
+        if internal_search(operation):
+            new_data.append(operation)
+    return new_data
+
+
+def process_bank_operations(data: list[dict], categories: list) -> dict:
+    """Функция для каталлогирования операций по переданным категориям"""
+    category_counter = Counter()
+
+    for operation in data:
+        if "description" not in operation:
+            continue
+
+        description = operation["description"]
+
+        for category in categories:
+            if category.lower() in description.lower():
+                category_counter[category] += 1
+                break
+
+    return dict(category_counter)
