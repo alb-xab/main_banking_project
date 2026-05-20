@@ -1,44 +1,18 @@
-import pytest
+from src.utils import load_operations, operation_conversion_amount
 
 
-@pytest.fixture
-def test_empty_string() -> str:
-    return " "
+def test_load_operations_empty_road() -> None:
+    assert load_operations("") == []
 
 
-@pytest.fixture
-def test_empty_list() -> list:
-    return []
+def test_load_operations_incorrect_road() -> None:
+    assert load_operations("data/not_file.json") == []
 
 
-@pytest.fixture
-def test_empty_dict() -> dict:
-    return {}
-
-
-@pytest.fixture
-def test_short_numbers() -> str:
-    return "1234"
-
-
-@pytest.fixture
-def test_incorrect_input() -> str:
-    return "чай попить и кофе"
-
-
-@pytest.fixture
-def test_work_list() -> list:
-    return [
-        {"id": 414288290, "state": "EXECUTED", "date": "2019-07-03T18:35:29.512364"},
-        {"id": 939719570, "state": "EXECUTED", "date": "2018-06-30T02:08:58.425572"},
-        {"id": 594226727, "state": "CANCELED", "date": "2018-09-12T21:27:25.241689"},
-        {"id": 615064591, "state": "CANCELED", "date": "2018-10-14T08:21:33.419441"},
-    ]
-
-
-@pytest.fixture
-def test_transaction_list() -> list[dict]:
-    return [
+def test_load_operations_correct_state() -> None:
+    result = load_operations("data/test_operations.json")
+    print(result)
+    assert result == [
         {
             "id": 939719570,
             "state": "EXECUTED",
@@ -87,27 +61,16 @@ def test_transaction_list() -> list[dict]:
     ]
 
 
-@pytest.fixture
-def test_transaction_list_incorrect_currency() -> list[dict]:
-    return [
-        {
-            "id": 939719570,
-            "state": "EXECUTED",
-            "date": "2018-06-30T02:08:58.425572",
-            "operationAmount": {"amount": "9824.07", "currency": {"name": "AMD", "code": "AMD"}},
-            "description": "Перевод организации",
-            "from": "Счет 75106830613657916952",
-            "to": "Счет 11776614605963066702",
-        }
-    ]
+def test_operation_conversion_amount_empty_list(test_empty_list: list) -> None:
+    assert operation_conversion_amount(test_empty_list) == ""
 
 
-@pytest.fixture
-def test_transaction_list_without_operation() -> list[dict]:
-    return [
-        {
-            "id": 939719570,
-            "state": "EXECUTED",
-            "date": "2018-06-30T02:08:58.425572",
-        }
-    ]
+def test_operation_conversion_amount_incorrect_currency(test_transaction_list_incorrect_currency: list) -> None:
+    assert operation_conversion_amount(test_transaction_list_incorrect_currency) is None
+
+
+def test_operation_conversion_amount_without_operation(test_transaction_list_without_operation: list) -> None:
+    assert (
+        operation_conversion_amount(test_transaction_list_without_operation)
+        == "Ошибка обработки операции 939719570. Информация по операции отсутствует"
+    )
