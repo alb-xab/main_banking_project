@@ -143,7 +143,7 @@ def process_bank_search(data: list[dict], search: str) -> list[dict]:
     new_data = []
     pattern_for_search = re.compile(re.escape(search))
 
-    def internal_search(obj: Any):
+    def internal_search(obj: Any) -> Any:
         if obj is None:
             return False
         elif isinstance(obj, str) and pattern_for_search.search(obj):

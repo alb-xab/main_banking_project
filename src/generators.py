@@ -1,8 +1,8 @@
 import random
-from typing import Generator
+from typing import Any, Generator
 
 
-def filter_by_currency(transactions: list, currency: str = "USD") -> Generator:
+def filter_by_currency(transactions: list[Any], currency: str = "USD") -> Generator:
     """Функция фильтрации словарей списка и поочередного получения словарей с указанной валютой."""
     if not transactions:
         return

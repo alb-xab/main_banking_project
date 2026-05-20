@@ -1,9 +1,10 @@
 from src.generators import filter_by_currency, transaction_descriptions
-from src.processing import sort_by_date, filter_by_state
+from src.processing import filter_by_state, sort_by_date
 from src.utils import load_operations, process_bank_search
 from src.widget import get_date, mask_account_card
 
-def get_valid_choise(text, valid_choices):
+
+def get_valid_choise(text: str, valid_choices: list) -> str:
     while True:
         choise = input(text).strip().lower()
         if choise in valid_choices:
@@ -11,17 +12,18 @@ def get_valid_choise(text, valid_choices):
         else:
             print(f"Ошибка: допустимые варианты: {', '.join(valid_choices)}.")
 
-def main():
+
+def main() -> None:
     """Основная функция приложения"""
-    print("""Привет! Добро пожаловать в программу работы 
-с банковскими транзакциями. 
+    print("""Привет! Добро пожаловать в программу работы
+с банковскими транзакциями.
 Выберите необходимый пункт меню:
 1. Получить информацию о транзакциях из JSON-файла
 2. Получить информацию о транзакциях из CSV-файла
 3. Получить информацию о транзакциях из XLSX-файла
 """)
     user_choice = str(input())
-    if user_choice != "1" or user_choice != "2" or user_choice != "3":
+    if user_choice not in ["1", "2", "3"]:
         print("Ошибка ввода. Попробуйте снова.")
         main()
     else:
@@ -32,30 +34,23 @@ def main():
         elif user_choice == "3":
             print("Для обработки выбран XLSX-файл")
 
-    road_for_file = input("Введите путь до файла:")
+    road_for_file = input("Введите путь к файлу:")
     database = load_operations(road_for_file)
     return choise_function(database, user_choice)
 
 
-def choise_function(data, user_choice):
+def choise_function(data: list[dict], user_choice: str) -> None:
     print("""Введите статус, по которому необходимо выполнить фильтрацию.
     Доступные для фильтровки статусы: EXECUTED, CANCELED, PENDING""")
     database = data
-    ch_fil = input().upper()
-    if ch_fil != "EXECUTED" or ch_fil != "CANCELED" or ch_fil != "PENDING":
+    ch_fil = str(input().upper())
+    if ch_fil not in ["EXECUTED", "CANCELED", "PENDING"]:
         print(f"Статус операции {ch_fil} недоступен.")
-        choise_function(data)
+        choise_function(data, user_choice)
     else:
         database = filter_by_state(database, ch_fil)
 
     need_sort_date = get_valid_choise("Отсортировать операции по дате? Да/Нет", ["да", "нет"])
-
-    sort_for_rub = get_valid_choise("Выводить только рублевые транзакции? Да/Нет", ["да", "нет"])
-
-    filt_for_word = get_valid_choise(
-        "Отфильтровать список транзакций по определённому слову в описании? Да/Нет", ["да", "нет"]
-    )
-
     if need_sort_date == "да":
         sort_classic = get_valid_choise(
             "Отсортировать по возрастанию или по убыванию?", ["по возрастанию", "по убыванию"]
@@ -65,9 +60,13 @@ def choise_function(data, user_choice):
         else:
             database = sort_by_date(database)
 
+    sort_for_rub = get_valid_choise("Выводить только рублевые транзакции? Да/Нет", ["да", "нет"])
     if sort_for_rub == "да":
-        database = filter_by_currency(database, "RUB")
+        database = list(filter_by_currency(database, "RUB"))
 
+    filt_for_word = get_valid_choise(
+        "Отфильтровать список транзакций по определённому слову в описании? Да/Нет", ["да", "нет"]
+    )
     if filt_for_word == "да":
         filt_word = str(input("Введите слово для фильтрации: "))
         database = process_bank_search(database, filt_word)
@@ -77,7 +76,7 @@ def choise_function(data, user_choice):
     if user_choice == "1":
         for operation in database:
             date = get_date(operation["date"])
-            description = transaction_descriptions(database)
+            description = operation.get("description")
             amount = int(operation["operationAmount"]["amount"])
             if "from" in operation and "to" in operation:
                 from_data = mask_account_card(operation["from"])
@@ -110,6 +109,3 @@ def choise_function(data, user_choice):
                                     {to_data}
                                     Сумма: {amount}
                                     """)
-
-
-

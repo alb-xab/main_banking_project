@@ -1,7 +1,4 @@
-from typing import Any
-
-
-def filter_by_state(work_list: list, state: str = "EXECUTED") -> str | list[Any]:
+def filter_by_state(work_list: list, state: str = "EXECUTED") -> str | list[dict]:
     """Функция для фильтрации списка словарей по ключу"""
     filtered_list = []
     for i in work_list:
