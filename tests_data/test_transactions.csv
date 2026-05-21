@@ -1,0 +1,6 @@
+id;state;date;amount;currency_name;currency_code;from;to;description
+5294458;EXECUTED;2022-06-20T18:08:20Z;16836;Yuan Renminbi;CNY;Visa 2759011965877198;Счет 38287443300766991082;Перевод с карты на карту
+481674;PENDING;2023-06-27T11:17:05Z;24192;Rupiah;IDR;;Счет 30690764917065605785;Открытие вклада
+3841619;EXECUTED;2021-11-17T04:36:33Z;20412;Yuan Renminbi;CNY;Mastercard 9807327200481485;Mastercard 0299086655780284;Перевод с карты на карту
+145602;PENDING;2022-09-27T19:32:41Z;20423;Dollar;USD;;Счет 96420288541936966744;Открытие вклада
+4090845;EXECUTED;2020-10-21T19:33:56Z;33047;Yuan Renminbi;CNY;Mastercard 0881837665755629;Discover 8878436805864916;Перевод с карты на карту
