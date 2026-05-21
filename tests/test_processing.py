@@ -26,8 +26,16 @@ def test_filter_by_state(test_work_list: list, state: str, expected: list[dict])
     assert filter_by_state(test_work_list, state) == expected
 
 
-def test_filter_by_empty_list(test_empty_list: list) -> None:
+def test_filter_by_state_empty_list(test_empty_list: list) -> None:
     assert filter_by_state(test_empty_list) == []
+
+
+def test_filter_by_state_no_matches() -> None:
+    work_list = [
+        {"id": 1, "state": "PENDING", "date": "2020-01-01T00:00:00"},
+        {"id": 2, "state": "PENDING", "date": "2020-01-02T00:00:00"},
+    ]
+    assert filter_by_state(work_list, "EXECUTED") == []
 
 
 @pytest.mark.parametrize(
@@ -55,3 +63,7 @@ def test_filter_by_empty_list(test_empty_list: list) -> None:
 )
 def test_sort_by_date(test_work_list: list, reverse: bool, expected: list[dict]) -> None:
     assert sort_by_date(test_work_list, reverse) == expected
+
+
+def test_sort_by_date_empty_list() -> None:
+    assert sort_by_date([]) == []

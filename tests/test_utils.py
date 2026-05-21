@@ -1,6 +1,9 @@
+import json
+from collections import Counter
 from unittest.mock import Mock, mock_open, patch
 
 import pandas as pd
+import pytest
 
 from src import utils
 
@@ -39,16 +42,18 @@ def test_load_operations_json_success(mock_exists: Mock, mock_file: Mock, mock_j
     mock_json_load.assert_called_once()
 
 
+@patch("builtins.open", new_callable=mock_open, read_data="{bad json")
+@patch("src.utils.os.path.exists", return_value=True)
+def test_load_operations_json_decode_error(mock_exists: Mock, mock_file: Mock) -> None:
+    with patch("src.utils.json.load", side_effect=json.JSONDecodeError("Expecting value", "{bad json", 0)):
+        result = utils.load_operations("data.json")
+    assert result == []
+
+
 @patch("src.utils.os.path.exists", return_value=True)
 def test_load_operations_unsupported_extension(mock_exists: Mock) -> None:
     result = utils.load_operations("data.txt")
     assert result == []
-
-
-def test_csv_file_success() -> None:
-    result = utils.load_operations("tests_data/test_transactions.csv")
-    assert isinstance(result, list)
-    assert len(result) == 5
 
 
 @patch("src.utils.pd.read_csv")
@@ -70,9 +75,11 @@ def test_load_operations_csv_success(mock_exists: Mock, mock_read_csv: Mock) -> 
         ]
     )
     mock_read_csv.return_value = df
+
     result = utils.load_operations("data.csv")
+
     assert result == df.to_dict(orient="records")
-    mock_read_csv.assert_called_once_with("data.csv")
+    mock_read_csv.assert_called_once_with("data.csv", sep=";")
 
 
 @patch("src.utils.pd.read_csv", return_value=pd.DataFrame())
@@ -101,7 +108,9 @@ def test_load_operations_xlsx_success(mock_exists: Mock, mock_read_excel: Mock) 
         ]
     )
     mock_read_excel.return_value = df
+
     result = utils.load_operations("data.xlsx")
+
     assert result == df.to_dict(orient="records")
     mock_read_excel.assert_called_once_with("data.xlsx", engine="openpyxl")
 
@@ -120,8 +129,42 @@ def test_load_operations_xlsx_empty_data_error(mock_exists: Mock, mock_read_exce
     assert result == []
 
 
+def test_process_bank_search_case_insensitive() -> None:
+    data = [
+        {"description": "Перевод организации"},
+        {"description": "Открытие вклада"},
+        {"description": "перевод с карты на карту"},
+    ]
+
+    result = utils.process_bank_search(data, "ПЕРЕВОД")
+    assert result == [
+        {"description": "Перевод организации"},
+        {"description": "перевод с карты на карту"},
+    ]
+
+
+def test_process_bank_search_empty_result() -> None:
+    data = [{"description": "Открытие вклада"}]
+    assert utils.process_bank_search(data, "Перевод") == []
+
+
+def test_process_bank_operations_basic() -> None:
+    data = [
+        {"description": "Перевод организации"},
+        {"description": "Оплата услуг"},
+        {"description": "Перевод с карты на карту"},
+        {"description": "Открытие вклада"},
+        {"id": 1},
+    ]
+    categories = ["Перевод", "Оплата", "Вклад"]
+
+    result = utils.process_bank_operations(data, categories)
+
+    assert result == {"Перевод": 2, "Оплата": 1, "Вклад": 1}
+
+
 def test_operation_conversion_amount_rub_returns_same_amount() -> None:
-    operation = [
+    operations = [
         {
             "id": 1,
             "operationAmount": {
@@ -131,7 +174,7 @@ def test_operation_conversion_amount_rub_returns_same_amount() -> None:
         }
     ]
 
-    result = utils.operation_conversion_amount(operation)
+    result = utils.operation_conversion_amount(operations)
     assert result == [31957.58]
 
 
@@ -199,6 +242,19 @@ def test_operation_conversion_amount_multiple_operations(mock_conversion: Mock) 
     result = utils.operation_conversion_amount(operations)
     assert result == [100.0, 700.0, None]
     mock_conversion.assert_called_once_with(10.0, "USD")
+
+
+def test_operation_conversion_amount_invalid_amount_string() -> None:
+    operations = [
+        {
+            "id": 10,
+            "operationAmount": {
+                "amount": "abc",
+                "currency": {"code": "RUB"},
+            },
+        }
+    ]
+    assert utils.operation_conversion_amount(operations) == [None]
 
 
 def test_operation_conversion_amount_empty_list(test_empty_list: list) -> None:

@@ -12,11 +12,6 @@ def test_empty_list() -> list:
 
 
 @pytest.fixture
-def test_empty_dict() -> dict:
-    return {}
-
-
-@pytest.fixture
 def test_short_numbers() -> str:
     return "1234"
 

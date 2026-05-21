@@ -11,15 +11,15 @@ from src.widget import get_date, mask_account_card
         ("Счет 73654108430135874305", "Счет **4305"),
     ],
 )
-def test_get_mask_account_basic_1(test_data: str, expected: str) -> None:
+def test_mask_account_card_basic(test_data: str, expected: str) -> None:
     assert mask_account_card(test_data) == expected
 
 
-def test_get_mask_account_input_1() -> None:
+def test_mask_account_card_empty() -> None:
     assert mask_account_card("") == "Ошибка ввода. Проверьте корректность ввода и повторите попытку"
 
 
-def test_get_mask_account_input_2() -> None:
+def test_mask_account_card_incorrect_input() -> None:
     assert (
         mask_account_card("ну и продолжили мы пить чай, а для проверки решили сделать так")
         == "Ошибка ввода. Проверьте корректность ввода и повторите попытку"
