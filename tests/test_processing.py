@@ -27,7 +27,7 @@ def test_filter_by_state(test_work_list: list, state: str, expected: list[dict])
 
 
 def test_filter_by_empty_list(test_empty_list: list) -> None:
-    assert filter_by_state(test_empty_list) == "Подходящих списков не было найдено"
+    assert filter_by_state(test_empty_list) == []
 
 
 @pytest.mark.parametrize(

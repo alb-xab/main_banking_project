@@ -19,7 +19,7 @@ def filter_by_currency(transactions: list[Any], currency: str = "USD") -> Genera
             yield transaction
 
 
-def transaction_descriptions(transactions: list) -> Generator[str, None, None]:
+def transaction_descriptions(transactions: list) -> Generator[list[Any], None, None]:
     """Функция генератора, который возвращает описание произведённых операций в списке словарей"""
     if not transactions:
         return

@@ -11,7 +11,7 @@ from src.external_api import conversion_amount
 
 logger = logging.getLogger("utils")
 logger.setLevel(logging.INFO)
-file_handler = logging.FileHandler("logs/utils.log", mode="w", encoding="utf-8")
+file_handler = logging.FileHandler("../logs/utils.log", mode="w", encoding="utf-8")
 file_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 file_handler.setFormatter(file_formatter)
 logger.addHandler(file_handler)
@@ -49,7 +49,7 @@ def load_operations(road_to_file: str) -> list[dict]:
 
         elif ext in (".csv", ".xlsx"):
             if ext == ".csv":
-                df = pd.read_csv(road_to_file)
+                df = pd.read_csv(road_to_file, sep=";")
             else:
                 df = pd.read_excel(road_to_file, engine="openpyxl")
             if df.empty:
@@ -141,31 +141,18 @@ def operation_conversion_amount(list_of_operations: List[Dict[str, Any]]) -> Lis
 def process_bank_search(data: list[dict], search: str) -> list[dict]:
     """Функция для поиска нужных операций по ключу в базе данных и получению нового списка подходящих операций"""
     new_data = []
-    pattern_for_search = re.compile(re.escape(search))
-
-    def internal_search(obj: Any) -> Any:
-        if obj is None:
-            return False
-        elif isinstance(obj, str) and pattern_for_search.search(obj):
-            return True
-        elif isinstance(obj, int | float) and pattern_for_search.search(str(obj)):
-            return True
-        elif isinstance(obj, list):
-            return any(internal_search(item) for item in obj)
-        elif isinstance(obj, dict):
-            return any(internal_search(item) for item in obj.values())
-        else:
-            return bool(pattern_for_search.search(str(obj)))
+    pattern_for_search = re.compile(re.escape(search), re.IGNORECASE)
 
     for operation in data:
-        if internal_search(operation):
+        description = operation.get("description", "")
+        if isinstance(description, str) and pattern_for_search.search(description):
             new_data.append(operation)
     return new_data
 
 
 def process_bank_operations(data: list[dict], categories: list) -> dict:
     """Функция для каталлогирования операций по переданным категориям"""
-    category_counter = Counter()
+    category_counter: Counter = Counter()
 
     for operation in data:
         if "description" not in operation:

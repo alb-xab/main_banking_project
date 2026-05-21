@@ -1,15 +1,20 @@
-def filter_by_state(work_list: list, state: str = "EXECUTED") -> str | list[dict]:
+from datetime import datetime
+
+
+def filter_by_state(work_list: list, state: str = "EXECUTED") -> list[dict]:
     """Функция для фильтрации списка словарей по ключу"""
     filtered_list = []
-    for i in work_list:
-        if i["state"] == state:
-            filtered_list.append(i)
+    for item in work_list:
+        if item.get("state") == state:
+            filtered_list.append(item)
     if not filtered_list:
-        return "Подходящих списков не было найдено"
+        return filtered_list
     return filtered_list
 
 
 def sort_by_date(work_list: list, reverse: bool = True) -> list:
-    """Функция для сортировки списка по дате"""
-    filtered_list = sorted(work_list, key=lambda x: x["date"], reverse=reverse)
-    return filtered_list
+    return sorted(
+        work_list,
+        key=lambda x: datetime.fromisoformat(x["date"].rstrip("Z")),
+        reverse=reverse,
+    )
